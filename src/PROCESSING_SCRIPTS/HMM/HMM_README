@@ -1,0 +1,33 @@
+############################ HOW TO HMM ################################
+
+
+# HMM are done on .dat data (.bw like) used in our local Genome Browser.
+# First script used is prof_2_seq.py. This script aims to cut each.dat file into different chromosomes
+# Also this script will cut each file into classes (files) of same size
+python /path/prof_2_seq.py min max nbclasse < input.dat > chr_output.classe
+
+
+# Then we use esthmm script to estimate the seed that will be used to compute assign an HMM state
+# N = Number of state
+# M = Number of classes see above
+esthmm -N2 -M15 chr_output.classe > seed.txt
+
+# Then compute associated probabilities to be on a given state
+# For each bin, it will give the probability to be in (out) K27 domain
+calc_prob -S seed.txt -N2 -M15 chr_output.classe > chr_output.prob
+
+# Turn each .prob into .dat filesusable into Gbrowser
+python /path/prob2dat.py step < chr_output.prob > chr_output.dat
+
+# To exctract domains, we will use extract_dom_coordinate.py.
+# the output is  chr | start| end | domain
+python /path/extract_dom_coordinate.py gap output.dat > output.txt
+
+# dist = Gap between domains
+# min = min length of a domain
+# the dist value will be used to refine and merge domains that are closed enough.
+# the output is chr | start | end
+python /path/domain_suite.py dist min output.txt > output.bed
+
+# The we can change the .bed into a .gff
+python /path/bed_2_gff.py type label < output.bed > output.gff
